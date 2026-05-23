@@ -256,6 +256,44 @@ test.describe('session limit picker', () => {
 	});
 });
 
+test.describe('box-trace pacer adapts to protocol', () => {
+	test('Box protocol renders a square outline', async ({ page }) => {
+		await page.addInitScript(() => {
+			window.localStorage.setItem('slowbreath:pacerStyle', 'box');
+			window.localStorage.setItem('slowbreath:protocol', 'box');
+		});
+		await gotoApp(page);
+		const svg = page.getByTestId('pacer-trace-svg');
+		await expect(svg.locator('rect')).toBeVisible();
+		await expect(svg.locator('polygon')).toHaveCount(0);
+		await expect(svg.locator('line')).toHaveCount(0);
+	});
+
+	test('4-7-8 protocol renders a triangle outline', async ({ page }) => {
+		await page.addInitScript(() => {
+			window.localStorage.setItem('slowbreath:pacerStyle', 'box');
+			window.localStorage.setItem('slowbreath:protocol', '478');
+		});
+		await gotoApp(page);
+		const svg = page.getByTestId('pacer-trace-svg');
+		await expect(svg.locator('polygon')).toBeVisible();
+		await expect(svg.locator('rect')).toHaveCount(0);
+	});
+
+	test('6 BPM protocol renders a horizontal line outline', async ({ page }) => {
+		await page.addInitScript(() => {
+			window.localStorage.setItem('slowbreath:pacerStyle', 'box');
+			window.localStorage.setItem('slowbreath:protocol', '6bpm');
+		});
+		await gotoApp(page);
+		const svg = page.getByTestId('pacer-trace-svg');
+		await expect(svg).toHaveAttribute('data-shape', 'line');
+		await expect(svg.locator('line')).toHaveCount(1);
+		await expect(svg.locator('rect')).toHaveCount(0);
+		await expect(svg.locator('polygon')).toHaveCount(0);
+	});
+});
+
 test.describe('protocol picker', () => {
 	test('switching to 4-7-8 persists and survives reload', async ({ page }) => {
 		await gotoApp(page);
