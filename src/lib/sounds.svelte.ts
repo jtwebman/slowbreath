@@ -1,12 +1,27 @@
 import { browser } from '$app/environment';
 import type { BreathPhase } from '$lib/breath.svelte';
 
-export type AmbientKind = 'off' | 'brown' | 'pink' | 'white';
+export type AmbientKind = 'off' | 'brown' | 'pink' | 'white' | 'rain' | 'forest' | 'ocean';
 export type CuesMode = 'soft' | 'distinct' | 'voice';
 export type VoiceSlot = 'inhale' | 'hold' | 'exhale';
 
-export const AMBIENT_KINDS: ReadonlyArray<AmbientKind> = ['off', 'brown', 'pink', 'white'];
+export const AMBIENT_KINDS: ReadonlyArray<AmbientKind> = [
+	'off',
+	'brown',
+	'pink',
+	'white',
+	'rain',
+	'forest',
+	'ocean'
+];
 export const CUES_MODES: ReadonlyArray<CuesMode> = ['soft', 'distinct', 'voice'];
+
+const FILE_AMBIENTS: ReadonlyArray<AmbientKind> = ['rain', 'forest', 'ocean'];
+const AMBIENT_FILE_PATHS: Partial<Record<AmbientKind, string>> = {
+	rain: '/sounds/rain.mp3',
+	forest: '/sounds/forest.mp3',
+	ocean: '/sounds/ocean.mp3'
+};
 
 const CUES_KEY = 'slowbreath:soundCues';
 const CUES_MODE_KEY = 'slowbreath:cuesMode';
@@ -175,13 +190,15 @@ class SoundStore {
 		}
 	}
 
-	startAmbient() {
+	async startAmbient() {
 		if (!browser || this.ambient === 'off') return;
 		const ctx = this.getCtx();
 		if (!ctx) return;
 		if (this.ambientSource) return;
-		const buffer = this.getOrBuildNoiseBuffer(ctx, this.ambient);
-		if (!buffer) return;
+		const kind = this.ambient;
+		const buffer = await this.getOrLoadBuffer(ctx, kind);
+		// Bail if the user switched ambient (or stopped) during the async load.
+		if (!buffer || this.ambient !== kind || this.ambientSource) return;
 		const source = ctx.createBufferSource();
 		source.buffer = buffer;
 		source.loop = true;
@@ -208,6 +225,18 @@ class SoundStore {
 		}, 800);
 		this.ambientSource = null;
 		this.ambientGain = null;
+	}
+
+	/** Smoothly fades ambient to silence while keeping the source playing — call when the breath pauses. */
+	pauseAmbient() {
+		if (!this.ambientGain || !this.ctx) return;
+		this.ambientGain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.3);
+	}
+
+	/** Smoothly fades ambient back up — call when the breath resumes. */
+	resumeAmbient() {
+		if (!this.ambientGain || !this.ctx) return;
+		this.ambientGain.gain.setTargetAtTime(this.ambientVolume, this.ctx.currentTime, 0.4);
 	}
 
 	private playSineTone(freq: number) {
@@ -263,10 +292,30 @@ class SoundStore {
 		return this.ctx;
 	}
 
-	private getOrBuildNoiseBuffer(ctx: AudioContext, kind: AmbientKind): AudioBuffer | null {
+	private async getOrLoadBuffer(
+		ctx: AudioContext,
+		kind: AmbientKind
+	): Promise<AudioBuffer | null> {
 		if (kind === 'off') return null;
 		const cached = this.noiseBuffers[kind];
 		if (cached) return cached;
+
+		if (FILE_AMBIENTS.includes(kind)) {
+			const path = AMBIENT_FILE_PATHS[kind];
+			if (!path) return null;
+			try {
+				const response = await fetch(path);
+				if (!response.ok) return null;
+				const arrayBuffer = await response.arrayBuffer();
+				const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+				this.noiseBuffers[kind] = audioBuffer;
+				return audioBuffer;
+			} catch {
+				return null;
+			}
+		}
+
+		// Generated: brown / pink / white
 		const duration = 5;
 		const buffer = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
 		const data = buffer.getChannelData(0);

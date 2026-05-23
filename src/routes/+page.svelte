@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { getLocale, localizeHref } from '$lib/paraglide/runtime';
 	import * as m from '$lib/paraglide/messages.js';
-	import { breath, type BreathPhase, type Protocol } from '$lib/breath.svelte';
+	import { breath, type BreathPhase, type Protocol, SESSION_LIMITS } from '$lib/breath.svelte';
 	import { ui } from '$lib/ui.svelte';
 	import PacerBoxTrace from '$lib/PacerBoxTrace.svelte';
 	import PacerCircle from '$lib/PacerCircle.svelte';
@@ -153,6 +153,29 @@
 
 		<div class="flex flex-col items-center gap-3">
 			{#if breath.phase === 'idle'}
+				<div
+					data-testid="session-limit-picker"
+					aria-label={m.session_limit_label()}
+					class="flex gap-2"
+				>
+					{#each SESSION_LIMITS as limit (limit ?? 'forever')}
+						<button
+							type="button"
+							aria-pressed={breath.sessionLimitSeconds === limit}
+							onclick={() => breath.setSessionLimit(limit)}
+							data-testid={limit === null
+								? 'session-limit-forever'
+								: `session-limit-${limit / 60}min`}
+							class="rounded-full border px-3 py-1.5 text-xs transition {breath.sessionLimitSeconds === limit
+								? 'border-sky-500 bg-sky-500/10 text-sky-700 dark:text-sky-300'
+								: 'border-slate-300 text-slate-500 hover:border-slate-500 dark:border-slate-700 dark:text-slate-400 dark:hover:border-slate-500'}"
+						>
+							{limit === null
+								? m.session_limit_forever()
+								: m.session_limit_minutes({ n: formatInt(limit / 60) })}
+						</button>
+					{/each}
+				</div>
 				<button
 					type="button"
 					data-testid="primary-action"

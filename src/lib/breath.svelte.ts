@@ -19,7 +19,11 @@ export const PROTOCOLS: Record<Protocol, ProtocolDurations> = {
 };
 
 const PROTOCOL_STORAGE_KEY = 'slowbreath:protocol';
+const SESSION_LIMIT_KEY = 'slowbreath:sessionLimit';
 const VALID_PROTOCOLS: ReadonlyArray<Protocol> = ['box', '478', '6bpm'];
+
+/** Session-limit options in seconds. `null` means run until the user stops. */
+export const SESSION_LIMITS: ReadonlyArray<number | null> = [5 * 60, 10 * 60, 15 * 60, null];
 
 /** Dev-mode runs the entire protocol at ~10× speed so Playwright can exercise cycles in seconds. */
 const DEV_SCALE = 0.1;
@@ -45,6 +49,8 @@ class BreathStore {
 	isPaused = $state(false);
 	isDevMode = $state(false);
 	protocol = $state<Protocol>('box');
+	/** Auto-stop the session after this many seconds. `null` = no limit. */
+	sessionLimitSeconds = $state<number | null>(null);
 
 	private rafId: number | null = null;
 	private phaseStart = 0;
@@ -60,6 +66,27 @@ class BreathStore {
 		try {
 			const saved = localStorage.getItem(PROTOCOL_STORAGE_KEY);
 			if (isProtocol(saved)) this.protocol = saved;
+		} catch {
+			// ignore
+		}
+		try {
+			const rawLimit = localStorage.getItem(SESSION_LIMIT_KEY);
+			if (rawLimit === 'null' || rawLimit === null) {
+				this.sessionLimitSeconds = null;
+			} else {
+				const n = parseInt(rawLimit, 10);
+				if (!Number.isNaN(n) && n > 0) this.sessionLimitSeconds = n;
+			}
+		} catch {
+			// ignore
+		}
+	}
+
+	setSessionLimit(limitSeconds: number | null) {
+		if (this.isRunning) return;
+		this.sessionLimitSeconds = limitSeconds;
+		try {
+			localStorage.setItem(SESSION_LIMIT_KEY, limitSeconds === null ? 'null' : String(limitSeconds));
 		} catch {
 			// ignore
 		}
@@ -104,6 +131,7 @@ class BreathStore {
 		this.isPaused = true;
 		if (this.rafId !== null) cancelAnimationFrame(this.rafId);
 		this.rafId = null;
+		sounds.pauseAmbient();
 	}
 
 	resume() {
@@ -111,6 +139,7 @@ class BreathStore {
 		this.phaseStart = performance.now();
 		this.sessionStart = performance.now();
 		this.isPaused = false;
+		sounds.resumeAmbient();
 		this.loop();
 	}
 
@@ -143,8 +172,21 @@ class BreathStore {
 		}
 
 		this.totalSeconds = this.sessionAccumulated + (now - this.sessionStart) / 1000;
+
+		// Auto-stop if a session limit is set and we've hit it.
+		const limit = this.effectiveSessionLimit();
+		if (limit !== null && this.totalSeconds >= limit) {
+			this.stop();
+			return;
+		}
+
 		this.rafId = requestAnimationFrame(this.loop);
 	};
+
+	private effectiveSessionLimit(): number | null {
+		if (this.sessionLimitSeconds === null) return null;
+		return this.isDevMode ? this.sessionLimitSeconds * DEV_SCALE : this.sessionLimitSeconds;
+	}
 
 	private phaseDurationFor(phase: BreathPhase): number {
 		if (phase === 'idle') return 0;

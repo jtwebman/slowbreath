@@ -246,9 +246,16 @@
 						class="mt-1 w-full cursor-pointer rounded-md border border-slate-300 bg-transparent py-1.5 pr-7 pl-3 text-sm text-slate-700 transition hover:border-slate-400 focus:outline-none dark:border-slate-700 dark:text-slate-200 dark:hover:border-slate-600"
 					>
 						<option value="off">{m.sound_ambient_off()}</option>
-						<option value="brown">{m.sound_ambient_brown()}</option>
-						<option value="pink">{m.sound_ambient_pink()}</option>
-						<option value="white">{m.sound_ambient_white()}</option>
+						<optgroup label="Generated">
+							<option value="brown">{m.sound_ambient_brown()}</option>
+							<option value="pink">{m.sound_ambient_pink()}</option>
+							<option value="white">{m.sound_ambient_white()}</option>
+						</optgroup>
+						<optgroup label="Nature">
+							<option value="rain">{m.sound_ambient_rain()}</option>
+							<option value="forest">{m.sound_ambient_forest()}</option>
+							<option value="ocean">{m.sound_ambient_ocean()}</option>
+						</optgroup>
 					</select>
 				</div>
 

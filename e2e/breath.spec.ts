@@ -205,6 +205,57 @@ test.describe('i18n', () => {
 	});
 });
 
+test.describe('session limit picker', () => {
+	test('all four options are visible in idle', async ({ page }) => {
+		await gotoApp(page);
+		await expect(page.getByTestId('session-limit-5min')).toBeVisible();
+		await expect(page.getByTestId('session-limit-10min')).toBeVisible();
+		await expect(page.getByTestId('session-limit-15min')).toBeVisible();
+		await expect(page.getByTestId('session-limit-forever')).toBeVisible();
+	});
+
+	test('default is "No limit" (forever)', async ({ page }) => {
+		await gotoApp(page);
+		await expect(page.getByTestId('session-limit-forever')).toHaveAttribute(
+			'aria-pressed',
+			'true'
+		);
+	});
+
+	test('selection persists across reload', async ({ page }) => {
+		await gotoApp(page);
+		await page.getByTestId('session-limit-10min').click();
+		const stored = await page.evaluate(() => localStorage.getItem('slowbreath:sessionLimit'));
+		expect(stored).toBe(String(10 * 60));
+
+		await page.reload();
+		await page.locator('html[data-hydrated="true"]').waitFor();
+		await expect(page.getByTestId('session-limit-10min')).toHaveAttribute('aria-pressed', 'true');
+	});
+
+	test('picker is hidden once a session starts', async ({ page }) => {
+		await gotoApp(page, '/?dev=1');
+		await page.getByTestId('primary-action').click();
+		await expect(page.getByTestId('phase-label')).toBeVisible();
+		await expect(page.getByTestId('session-limit-picker')).toHaveCount(0);
+	});
+
+	test('session auto-stops when limit is reached (dev-scaled 5 min ≈ 30s wall)', async ({
+		page
+	}) => {
+		await gotoApp(page, '/?dev=1');
+		// Pre-seed a much shorter limit so the test runs quickly.
+		await page.evaluate(() => localStorage.setItem('slowbreath:sessionLimit', String(20)));
+		await page.reload();
+		await page.locator('html[data-hydrated="true"]').waitFor();
+		// Dev mode scales by 10×, so 20s "wall time" limit → ~2s real time
+		await page.getByTestId('primary-action').click();
+		await expect(page.getByTestId('phase-label')).toBeVisible();
+		// After ~2s of dev-mode wall time, breath should auto-stop and return to idle
+		await expect(page.getByTestId('primary-action')).toHaveText('Start', { timeout: 5000 });
+	});
+});
+
 test.describe('protocol picker', () => {
 	test('switching to 4-7-8 persists and survives reload', async ({ page }) => {
 		await gotoApp(page);
@@ -253,11 +304,30 @@ test.describe('sound settings', () => {
 		await expect(page.getByTestId('voice-slot-exhale')).toBeVisible();
 	});
 
-	test('ambient dropdown lists all four kinds', async ({ page }) => {
+	test('ambient dropdown lists all seven kinds (3 generated + 3 nature + off)', async ({
+		page
+	}) => {
 		await gotoApp(page);
 		await page.getByTestId('sound-settings-button').click();
 		const opts = await page.getByTestId('sound-ambient-select').locator('option').all();
-		expect(opts.length).toBe(4);
+		expect(opts.length).toBe(7);
+	});
+
+	test('ambient pauses when breath pauses, resumes on resume', async ({ page }) => {
+		// We can't easily observe Web Audio gain values directly from Playwright,
+		// but we can at least verify the breath store calls into the sound store
+		// without errors and the UI state is consistent.
+		await gotoApp(page, '/?dev=1');
+		await page.getByTestId('sound-settings-button').click();
+		await page.getByTestId('sound-ambient-select').selectOption('brown');
+		// Close the popover by pressing Escape
+		await page.keyboard.press('Escape');
+		await page.getByTestId('primary-action').click(); // Start
+		await expect(page.getByTestId('phase-label')).toBeVisible();
+		await page.getByTestId('primary-action').click(); // Pause
+		await expect(page.getByTestId('primary-action')).toHaveText('Resume');
+		await page.getByTestId('primary-action').click(); // Resume
+		await expect(page.getByTestId('primary-action')).toHaveText('Pause');
 	});
 
 	test('uploading a voice file persists in localStorage', async ({ page }) => {
