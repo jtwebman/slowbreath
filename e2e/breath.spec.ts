@@ -322,6 +322,28 @@ test.describe('protocol picker', () => {
 	});
 });
 
+test.describe('sound settings: layout', () => {
+	for (const [w, h] of [
+		[375, 667],
+		[390, 844],
+		[1280, 720]
+	]) {
+		test(`popover stays inside viewport at ${w}x${h}`, async ({ browser }) => {
+			const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+			const page = await ctx.newPage();
+			await page.goto('/');
+			await page.locator('html[data-hydrated="true"]').waitFor();
+			await page.getByTestId('sound-settings-button').click();
+			const box = await page.getByTestId('sound-settings-panel').boundingBox();
+			expect(box).not.toBeNull();
+			expect(box!.x).toBeGreaterThanOrEqual(0);
+			expect(box!.x + box!.width).toBeLessThanOrEqual(w);
+			expect(box!.y).toBeGreaterThanOrEqual(0);
+			await ctx.close();
+		});
+	}
+});
+
 test.describe('sound settings', () => {
 	test('panel opens with all controls visible', async ({ page }) => {
 		await gotoApp(page);
