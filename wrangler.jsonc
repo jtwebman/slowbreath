@@ -12,5 +12,6 @@
 		"directory": ".svelte-kit/cloudflare"
 	},
 	"workers_dev": true,
-	"preview_urls": true
+	"preview_urls": true,
+	"routes": [{ "pattern": "slowbreath.app", "custom_domain": true }]
 }
