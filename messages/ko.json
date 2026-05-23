@@ -67,5 +67,11 @@
 	"sound_voice_too_large": "File too large (500 KB max).",
 	"sound_voice_storage_error": "Could not save — browser storage might be full.",
 	"sound_ambient_pink": "Pink noise",
-	"sound_ambient_white": "White noise"
+	"sound_ambient_white": "White noise",
+	"sound_ambient_rain": "Rain (with thunder)",
+	"sound_ambient_forest": "Forest morning",
+	"sound_ambient_ocean": "Ocean waves",
+	"session_limit_label": "Session length",
+	"session_limit_minutes": "{n} min",
+	"session_limit_forever": "No limit"
 }
