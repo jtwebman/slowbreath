@@ -107,7 +107,7 @@
 		<div
 			bind:this={panelEl}
 			data-testid="sound-settings-panel"
-			class="absolute top-full right-0 z-50 mt-2 max-h-[80vh] w-80 overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xl dark:border-slate-800 dark:bg-slate-900"
+			class="fixed top-14 right-3 z-50 max-h-[80vh] w-80 max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 text-left shadow-xl dark:border-slate-800 dark:bg-slate-900"
 		>
 			<div class="space-y-5">
 				<label class="flex items-start gap-3 text-sm">
