@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { getLocale, localizeHref } from '$lib/paraglide/runtime';
 	import * as m from '$lib/paraglide/messages.js';
-	import { breath, type BreathPhase } from '$lib/breath.svelte';
+	import { breath, type BreathPhase, type Protocol } from '$lib/breath.svelte';
 	import { ui } from '$lib/ui.svelte';
 	import PacerBoxTrace from '$lib/PacerBoxTrace.svelte';
 	import PacerCircle from '$lib/PacerCircle.svelte';
@@ -72,7 +72,7 @@
 </svelte:head>
 
 <main
-	class="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-slate-50 to-sky-50 px-6 py-12 text-slate-900 dark:from-slate-950 dark:to-slate-900 dark:text-slate-100"
+	class="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gradient-to-b from-slate-50 to-sky-50 px-6 py-6 text-slate-900 dark:from-slate-950 dark:to-slate-900 dark:text-slate-100"
 >
 	{#if breath.isDevMode}
 		<div
@@ -90,14 +90,42 @@
 		{m.why_title()} →
 	</a>
 
-	<div class="flex w-full max-w-xl flex-col items-center gap-10">
-		<header class="flex flex-col items-center gap-2 text-center">
+	<div class="flex w-full max-w-xl flex-col items-center gap-6">
+		<header class="flex flex-col items-center gap-1 text-center">
 			<h1 class="text-2xl font-semibold tracking-tight text-slate-700 dark:text-slate-200">
 				{m.app_name()}
 			</h1>
-			<p class="text-sm text-slate-500 dark:text-slate-400">
-				{m.main_protocol_label()}
-			</p>
+			<div class="relative">
+				<label class="text-sm text-slate-500 dark:text-slate-400">
+					<span class="sr-only">{m.protocol_picker_label()}</span>
+					<select
+						value={breath.protocol}
+						onchange={(e) =>
+							breath.setProtocol((e.currentTarget as HTMLSelectElement).value as Protocol)}
+						disabled={breath.isRunning}
+						data-testid="protocol-picker"
+						class="cursor-pointer appearance-none bg-transparent pr-5 text-sm text-slate-500 transition hover:text-slate-700 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-400 dark:hover:text-slate-200"
+					>
+						<option value="box">{m.protocol_box()}</option>
+						<option value="478">{m.protocol_478()}</option>
+						<option value="6bpm">{m.protocol_6bpm()}</option>
+					</select>
+					<svg
+						class="pointer-events-none absolute top-1/2 right-0 -translate-y-1/2 text-slate-400"
+						xmlns="http://www.w3.org/2000/svg"
+						width="10"
+						height="10"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path d="m6 9 6 6 6-6" />
+					</svg>
+				</label>
+			</div>
 		</header>
 
 		<div class="flex w-full items-center justify-center">
@@ -110,20 +138,20 @@
 			{/if}
 		</div>
 
-		<div class="flex h-10 items-center justify-center">
+		<div class="flex h-8 items-center justify-center">
 			{#if breath.phase === 'idle'}
 				<p class="text-sm text-slate-500 dark:text-slate-400">{m.main_idle_hint()}</p>
 			{:else}
 				<p
 					data-testid="phase-label"
-					class="text-2xl font-light tracking-wide text-slate-700 tabular-nums dark:text-slate-200"
+					class="text-xl font-light tracking-wide text-slate-700 tabular-nums dark:text-slate-200"
 				>
 					{phaseLabel}
 				</p>
 			{/if}
 		</div>
 
-		<div class="flex flex-col items-center gap-4">
+		<div class="flex flex-col items-center gap-3">
 			{#if breath.phase === 'idle'}
 				<button
 					type="button"

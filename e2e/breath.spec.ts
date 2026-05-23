@@ -6,10 +6,10 @@ async function gotoApp(page: Page, path: string = '/') {
 }
 
 test.describe('idle state', () => {
-	test('renders heading, protocol label, and Start button', async ({ page }) => {
+	test('renders heading, protocol picker, and Start button', async ({ page }) => {
 		await gotoApp(page);
 		await expect(page.getByRole('heading', { name: 'Slow Breath' })).toBeVisible();
-		await expect(page.getByText('Box breathing · 4-4-4-4')).toBeVisible();
+		await expect(page.getByTestId('protocol-picker')).toHaveValue('box');
 		await expect(page.getByTestId('primary-action')).toHaveText('Start');
 	});
 
@@ -203,6 +203,115 @@ test.describe('i18n', () => {
 		await gotoApp(page, '/es/');
 		await expect(page.locator('html')).toHaveAttribute('lang', 'es');
 	});
+});
+
+test.describe('protocol picker', () => {
+	test('switching to 4-7-8 persists and survives reload', async ({ page }) => {
+		await gotoApp(page);
+		await page.getByTestId('protocol-picker').selectOption('478');
+		const stored = await page.evaluate(() => localStorage.getItem('slowbreath:protocol'));
+		expect(stored).toBe('478');
+
+		await page.reload();
+		await page.locator('html[data-hydrated="true"]').waitFor();
+		await expect(page.getByTestId('protocol-picker')).toHaveValue('478');
+	});
+
+	test('picker is disabled while a session is running', async ({ page }) => {
+		await gotoApp(page, '/?dev=1');
+		await page.getByTestId('primary-action').click();
+		await expect(page.getByTestId('phase-label')).toBeVisible();
+		await expect(page.getByTestId('protocol-picker')).toBeDisabled();
+	});
+
+	test('switching to 6 BPM completes cycles (no zero-duration phases stall)', async ({ page }) => {
+		await gotoApp(page, '/?dev=1');
+		await page.getByTestId('protocol-picker').selectOption('6bpm');
+		await page.getByTestId('primary-action').click();
+		// 6bpm has no holds; cycle is just inhale + exhale
+		await expect(page.getByTestId('stats')).toContainText('Cycles: 1', { timeout: 5000 });
+	});
+});
+
+test.describe('sound settings', () => {
+	test('panel opens with all controls visible', async ({ page }) => {
+		await gotoApp(page);
+		await page.getByTestId('sound-settings-button').click();
+		await expect(page.getByTestId('sound-settings-panel')).toBeVisible();
+		await expect(page.getByTestId('sound-cues-toggle')).toBeVisible();
+		await expect(page.getByTestId('sound-cues-mode')).toBeVisible();
+		await expect(page.getByTestId('sound-ambient-select')).toBeVisible();
+	});
+
+	test('cue mode "voice" reveals upload slots', async ({ page }) => {
+		await gotoApp(page);
+		await page.getByTestId('sound-settings-button').click();
+		await page.getByTestId('sound-cues-mode').selectOption('voice');
+		await expect(page.getByTestId('voice-uploads')).toBeVisible();
+		await expect(page.getByTestId('voice-slot-inhale')).toBeVisible();
+		await expect(page.getByTestId('voice-slot-hold')).toBeVisible();
+		await expect(page.getByTestId('voice-slot-exhale')).toBeVisible();
+	});
+
+	test('ambient dropdown lists all four kinds', async ({ page }) => {
+		await gotoApp(page);
+		await page.getByTestId('sound-settings-button').click();
+		const opts = await page.getByTestId('sound-ambient-select').locator('option').all();
+		expect(opts.length).toBe(4);
+	});
+
+	test('uploading a voice file persists in localStorage', async ({ page }) => {
+		await gotoApp(page);
+		await page.getByTestId('sound-settings-button').click();
+		await page.getByTestId('sound-cues-mode').selectOption('voice');
+		await page.getByTestId('voice-upload-inhale').click();
+		await page.getByTestId('voice-file-input').setInputFiles({
+			name: 'breathe-in.mp3',
+			mimeType: 'audio/mpeg',
+			buffer: Buffer.from([0xff, 0xfb, 0x90, 0x44])
+		});
+		await expect(page.getByTestId('voice-name-inhale')).toHaveText('breathe-in.mp3');
+		const stored = await page.evaluate(() => localStorage.getItem('slowbreath:voiceInhaleName'));
+		expect(stored).toBe('breathe-in.mp3');
+	});
+
+	test('clear removes the voice file from storage', async ({ page }) => {
+		await gotoApp(page);
+		// Pre-seed a voice file
+		await page.evaluate(() => {
+			localStorage.setItem('slowbreath:voiceHold', 'data:audio/wav;base64,UklGRg==');
+			localStorage.setItem('slowbreath:voiceHoldName', 'hold.wav');
+			localStorage.setItem('slowbreath:cuesMode', 'voice');
+		});
+		await page.reload();
+		await page.locator('html[data-hydrated="true"]').waitFor();
+
+		await page.getByTestId('sound-settings-button').click();
+		await page.getByTestId('voice-clear-hold').click();
+
+		const data = await page.evaluate(() => localStorage.getItem('slowbreath:voiceHold'));
+		expect(data).toBeNull();
+	});
+});
+
+test.describe('layout: Start button fits above the fold', () => {
+	for (const [w, h] of [
+		[1280, 720],
+		[1366, 768],
+		[375, 667],
+		[390, 844]
+	]) {
+		test(`visible at ${w}x${h}`, async ({ browser }) => {
+			const ctx = await browser.newContext({ viewport: { width: w, height: h } });
+			const page = await ctx.newPage();
+			await page.goto('/');
+			await page.locator('html[data-hydrated="true"]').waitFor();
+			const box = await page.getByTestId('primary-action').boundingBox();
+			expect(box).not.toBeNull();
+			expect(box!.y + box!.height).toBeLessThanOrEqual(h);
+			await ctx.close();
+		});
+	}
 });
 
 test.describe('color scheme', () => {

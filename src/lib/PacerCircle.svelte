@@ -25,7 +25,7 @@
 	const glow = $derived((scale - SCALE_MIN) / RANGE); // 0..1
 </script>
 
-<div class="pointer-events-none relative aspect-square w-full max-w-[440px]">
+<div class="pointer-events-none relative aspect-square w-full max-w-[min(360px,55vh)]">
 	<!-- Outer halo, fades on inhale, settles on exhale -->
 	<div
 		class="absolute inset-0 rounded-full"
