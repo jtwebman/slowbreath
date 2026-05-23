@@ -1,0 +1,66 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+
+	"app_name": "Slow Breath",
+	"meta_description": "A simple full-screen pacer for slow breathing — 4-4-4-4 box breathing by default. Backed by research on blood pressure, anxiety, and focus. No accounts, no tracking.",
+
+	"main_protocol_label": "Box breathing · 4-4-4-4",
+	"main_idle_hint": "Pace your breath. Reduce stress. Lower blood pressure.",
+
+	"main_start": "Start",
+	"main_pause": "Pause",
+	"main_resume": "Resume",
+	"main_stop": "Stop",
+
+	"phase_inhale": "Breathe in",
+	"phase_hold_full": "Hold",
+	"phase_exhale": "Breathe out",
+	"phase_hold_empty": "Hold",
+
+	"stat_cycles": "Cycles",
+	"stat_time": "Time",
+
+	"pacer_style_label": "Pacer style",
+	"pacer_glow": "Glow",
+	"pacer_box": "Box trace",
+	"pacer_circle": "Pulsing circle",
+
+	"sound_settings_label": "Sound settings",
+	"sound_cues_toggle": "Phase cue tones",
+	"sound_cues_hint": "A soft sine ping at each phase change.",
+	"sound_ambient_label": "Ambient",
+	"sound_ambient_off": "Off",
+	"sound_ambient_brown": "Brown noise",
+	"sound_volume_cues": "Cue volume",
+	"sound_volume_ambient": "Ambient volume",
+
+	"title_session": "Breathing — Slow Breath",
+
+	"github_link_label": "View source on GitHub",
+	"language_label": "Language",
+
+	"why_title": "Why this exists",
+	"why_meta_description": "The research behind slow breathing — for blood pressure, anxiety, and focus. With real citations and honest caveats.",
+	"why_back_to_breathing": "← Back to breathing",
+	"why_intro": "Most \"calm\" breathing apps are subscription mazes with too many guided sessions and not enough actual evidence. This one operationalizes one specific, research-backed pattern — 4-4-4-4 box breathing — with a clean visual pacer and nothing else.",
+
+	"why_section_bp": "Slow breathing and blood pressure",
+	"why_bp_p1": "Slow paced breathing — anywhere from about 3 to 6 breaths per minute — has been shown in multiple randomized trials to lower both systolic and diastolic blood pressure. Mechanism: shifting the autonomic balance toward parasympathetic activity via baroreceptor coupling.",
+	"why_bp_p2": "A 2017 review in the journal Breathe summarizing the evidence concluded that slow breathing techniques are a safe, easy adjunct to standard hypertension care. They don't replace medication — but they meaningfully add to it. Box breathing at 4-4-4-4 (≈3.75 breaths/min) sits well within the effective range.",
+
+	"why_section_anxiety": "Slow breathing and anxiety",
+	"why_anxiety_p1": "A 2023 Stanford randomized controlled trial (Balban, Spiegel, et al., Cell Reports Medicine) compared three breathing protocols against mindfulness meditation over four weeks. All four reduced anxiety; cyclic sighing — emphasizing prolonged exhalation — performed best. Box breathing also worked; it just wasn't the winner.",
+	"why_anxiety_p2": "The honest takeaway: any consistent slow-breathing practice helps. The specific protocol matters less than doing it. Pick one you'll actually use.",
+
+	"why_section_app": "What this app does",
+	"why_app_p1": "It paces one cycle of box breathing — 4 seconds in, 4 hold, 4 out, 4 hold. The expanding circle is the only thing you have to watch. You can run it as long as you like; press Stop when you're done.",
+	"why_app_p2": "No accounts. No streaks. No upsell. Source code is open under AGPL-3.0. If you want a different pattern, future versions will add a picker — for now, this is the default that's good for most people.",
+
+	"why_references": "References",
+	"why_ref_russo": "Russo MA, Santarelli DM, O'Rourke D. *The physiological effects of slow breathing in the healthy human.* Breathe. 2017;13(4):298–309.",
+	"why_ref_schein": "Schein MH, Gavish B, Herz M, et al. *Treating hypertension with a device that slows and regularises breathing: a randomised, double-blind controlled study.* Journal of Human Hypertension. 2001;15(4):271–278.",
+	"why_ref_balban": "Balban MY, Neri E, Kogon MM, et al. *Brief structured respiration practices enhance mood and reduce physiological arousal.* Cell Reports Medicine. 2023;4(1):100895.",
+
+	"why_translation_notice": "Machine-translated page. The English version is the source of truth: ",
+	"why_translation_notice_link": "read in English"
+}

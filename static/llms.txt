@@ -1,0 +1,44 @@
+# Slow Breath
+
+> A simple full-screen pacer for slow breathing. Box breathing (4-4-4-4) by default — 4 seconds in, 4 hold, 4 out, 4 hold — backed by research on blood pressure, anxiety, and focus. No accounts, no tracking, no upsell.
+
+The site is a static SvelteKit app with no backend. Available in 13 languages with URL-prefix routing. Source code is open under AGPL-3.0.
+
+## Pages — English (canonical)
+
+- [Home](https://slowbreath.app/en/): The breathing pacer — choose a visualization style (Glow shader / Box trace / Pulsing circle), press Start.
+- [Why this exists](https://slowbreath.app/en/why): The peer-reviewed research behind slow breathing — blood pressure, anxiety reduction, with full citations and honest caveats.
+
+## Pages — other languages
+
+- Spanish (Español): [Home](https://slowbreath.app/es/) · [Why](https://slowbreath.app/es/why)
+- Portuguese (Português, Brazilian): [Home](https://slowbreath.app/pt/) · [Why](https://slowbreath.app/pt/why)
+- French (Français): [Home](https://slowbreath.app/fr/) · [Why](https://slowbreath.app/fr/why)
+- German (Deutsch): [Home](https://slowbreath.app/de/) · [Why](https://slowbreath.app/de/why)
+- Italian (Italiano): [Home](https://slowbreath.app/it/) · [Why](https://slowbreath.app/it/why)
+- Dutch (Nederlands): [Home](https://slowbreath.app/nl/) · [Why](https://slowbreath.app/nl/why)
+- Polish (Polski): [Home](https://slowbreath.app/pl/) · [Why](https://slowbreath.app/pl/why)
+- Russian (Русский): [Home](https://slowbreath.app/ru/) · [Why](https://slowbreath.app/ru/why)
+- Japanese (日本語): [Home](https://slowbreath.app/ja/) · [Why](https://slowbreath.app/ja/why)
+- Korean (한국어): [Home](https://slowbreath.app/ko/) · [Why](https://slowbreath.app/ko/why)
+- Simplified Chinese (中文): [Home](https://slowbreath.app/zh/) · [Why](https://slowbreath.app/zh/why)
+- Hindi (हिन्दी): [Home](https://slowbreath.app/hi/) · [Why](https://slowbreath.app/hi/why)
+
+Non-English Why pages show an inline notice flagging machine translation and pointing readers to the English original.
+
+## Source code and releases
+
+- [GitHub repository](https://github.com/jtwebman/slowbreath): AGPL-3.0-licensed source
+- [Releases](https://github.com/jtwebman/slowbreath/releases): Version history and changelogs
+
+## Key research the Why page cites
+
+- Russo MA, Santarelli DM, O'Rourke D. *The physiological effects of slow breathing in the healthy human.* Breathe. 2017;13(4):298–309. [PubMed](https://pubmed.ncbi.nlm.nih.gov/29209423/)
+- Schein MH, Gavish B, Herz M, et al. *Treating hypertension with a device that slows and regularises breathing.* Journal of Human Hypertension. 2001;15(4):271–278. [PubMed](https://pubmed.ncbi.nlm.nih.gov/11319675/)
+- Balban MY, Neri E, Kogon MM, et al. *Brief structured respiration practices enhance mood and reduce physiological arousal.* Cell Reports Medicine. 2023;4(1):100895. [Cell Reports Medicine](https://www.cell.com/cell-reports-medicine/fulltext/S2666-3791(22)00474-8)
+
+## What it deliberately is not
+
+This app is not a Pomodoro timer, productivity tracker, full meditation app, fitness app, or sleep aid. It does not gamify breathing, score the user, push subscription content, or replace medical care. It implements one specific evidence-based protocol — 4-4-4-4 box breathing — with a calm visual pacer and nothing else.
+
+It is a companion to <https://onyourfeet.app> (a stand-up reminder for desk workers, also by jtwebman) in a small portfolio of single-purpose, research-backed micro-tools.
