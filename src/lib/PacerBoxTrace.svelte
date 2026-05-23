@@ -23,7 +23,7 @@
 	const pos = $derived(dotPosition(breath.phase, breath.phaseProgress));
 </script>
 
-<div class="relative aspect-square w-full max-w-[440px]">
+<div class="relative aspect-square w-full max-w-[min(360px,55vh)]">
 	<svg viewBox="0 0 100 100" class="h-full w-full" xmlns="http://www.w3.org/2000/svg">
 		<defs>
 			<radialGradient id="dotGlow" cx="50%" cy="50%" r="50%">

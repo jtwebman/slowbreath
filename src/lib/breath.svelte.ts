@@ -3,6 +3,8 @@ import { sounds } from '$lib/sounds.svelte';
 
 export type BreathPhase = 'idle' | 'inhale' | 'hold_full' | 'exhale' | 'hold_empty';
 
+export type Protocol = 'box' | '478' | '6bpm';
+
 export interface ProtocolDurations {
 	inhale: number;
 	holdFull: number;
@@ -10,20 +12,17 @@ export interface ProtocolDurations {
 	holdEmpty: number;
 }
 
-export const BOX_4444: ProtocolDurations = {
-	inhale: 4,
-	holdFull: 4,
-	exhale: 4,
-	holdEmpty: 4
+export const PROTOCOLS: Record<Protocol, ProtocolDurations> = {
+	box: { inhale: 4, holdFull: 4, exhale: 4, holdEmpty: 4 },
+	'478': { inhale: 4, holdFull: 7, exhale: 8, holdEmpty: 0 },
+	'6bpm': { inhale: 5, holdFull: 0, exhale: 5, holdEmpty: 0 }
 };
 
-/** Dev-mode scales every phase down so Playwright can exercise the loop in seconds. */
-const DEV_DURATIONS: ProtocolDurations = {
-	inhale: 0.35,
-	holdFull: 0.25,
-	exhale: 0.35,
-	holdEmpty: 0.25
-};
+const PROTOCOL_STORAGE_KEY = 'slowbreath:protocol';
+const VALID_PROTOCOLS: ReadonlyArray<Protocol> = ['box', '478', '6bpm'];
+
+/** Dev-mode runs the entire protocol at ~10× speed so Playwright can exercise cycles in seconds. */
+const DEV_SCALE = 0.1;
 
 const NEXT_PHASE: Record<Exclude<BreathPhase, 'idle'>, Exclude<BreathPhase, 'idle'>> = {
 	inhale: 'hold_full',
@@ -32,9 +31,12 @@ const NEXT_PHASE: Record<Exclude<BreathPhase, 'idle'>, Exclude<BreathPhase, 'idl
 	hold_empty: 'inhale'
 };
 
+function isProtocol(v: unknown): v is Protocol {
+	return typeof v === 'string' && (VALID_PROTOCOLS as ReadonlyArray<string>).includes(v);
+}
+
 class BreathStore {
 	phase = $state<BreathPhase>('idle');
-	/** 0..1 within the current phase (eased target left to the pacer component). */
 	phaseProgress = $state(0);
 	phaseSecondsLeft = $state(0);
 	totalSeconds = $state(0);
@@ -42,8 +44,8 @@ class BreathStore {
 	isRunning = $state(false);
 	isPaused = $state(false);
 	isDevMode = $state(false);
+	protocol = $state<Protocol>('box');
 
-	private durations: ProtocolDurations = BOX_4444;
 	private rafId: number | null = null;
 	private phaseStart = 0;
 	private phaseAccumulated = 0;
@@ -55,7 +57,22 @@ class BreathStore {
 		if (this.initialized || !browser) return;
 		this.initialized = true;
 		this.isDevMode = opts.dev;
-		this.durations = opts.dev ? DEV_DURATIONS : BOX_4444;
+		try {
+			const saved = localStorage.getItem(PROTOCOL_STORAGE_KEY);
+			if (isProtocol(saved)) this.protocol = saved;
+		} catch {
+			// ignore
+		}
+	}
+
+	setProtocol(next: Protocol) {
+		if (this.isRunning) return;
+		this.protocol = next;
+		try {
+			localStorage.setItem(PROTOCOL_STORAGE_KEY, next);
+		} catch {
+			// ignore
+		}
 	}
 
 	start() {
@@ -66,14 +83,14 @@ class BreathStore {
 			this.totalSeconds = 0;
 			this.sessionAccumulated = 0;
 			this.phaseAccumulated = 0;
-			this.phase = 'inhale';
+			this.phase = this.firstNonZeroPhase();
 		}
 		this.phaseStart = performance.now();
 		this.sessionStart = performance.now();
 		this.isRunning = true;
 		this.isPaused = false;
 		if (startingFresh) {
-			sounds.playPhaseCue();
+			sounds.playPhaseCue(this.phase);
 			sounds.startAmbient();
 		}
 		this.loop();
@@ -118,7 +135,7 @@ class BreathStore {
 		const elapsedInPhase = this.phaseAccumulated + liveElapsed;
 		const phaseDuration = this.currentPhaseDuration();
 
-		if (elapsedInPhase >= phaseDuration) {
+		if (phaseDuration > 0 && elapsedInPhase >= phaseDuration) {
 			this.advancePhase(elapsedInPhase - phaseDuration, now);
 		} else {
 			this.phaseProgress = phaseDuration > 0 ? elapsedInPhase / phaseDuration : 0;
@@ -129,30 +146,47 @@ class BreathStore {
 		this.rafId = requestAnimationFrame(this.loop);
 	};
 
+	private phaseDurationFor(phase: BreathPhase): number {
+		if (phase === 'idle') return 0;
+		const base = PROTOCOLS[this.protocol];
+		const raw =
+			phase === 'inhale'
+				? base.inhale
+				: phase === 'hold_full'
+					? base.holdFull
+					: phase === 'exhale'
+						? base.exhale
+						: base.holdEmpty;
+		return this.isDevMode ? raw * DEV_SCALE : raw;
+	}
+
 	private currentPhaseDuration(): number {
-		switch (this.phase) {
-			case 'inhale':
-				return this.durations.inhale;
-			case 'hold_full':
-				return this.durations.holdFull;
-			case 'exhale':
-				return this.durations.exhale;
-			case 'hold_empty':
-				return this.durations.holdEmpty;
-			default:
-				return 0;
+		return this.phaseDurationFor(this.phase);
+	}
+
+	private firstNonZeroPhase(): Exclude<BreathPhase, 'idle'> {
+		const order: Exclude<BreathPhase, 'idle'>[] = ['inhale', 'hold_full', 'exhale', 'hold_empty'];
+		for (const p of order) {
+			if (this.phaseDurationFor(p) > 0) return p;
 		}
+		return 'inhale';
 	}
 
 	private advancePhase(overshootSeconds: number, now: number) {
 		if (this.phase === 'idle') return;
-		const completedFullCycle = this.phase === 'hold_empty';
-		const next = NEXT_PHASE[this.phase];
+		let next: Exclude<BreathPhase, 'idle'> = NEXT_PHASE[this.phase];
+		let cycleCompleted = this.phase === 'hold_empty';
+		let safety = 0;
+		while (this.phaseDurationFor(next) === 0 && safety < 8) {
+			if (next === 'hold_empty') cycleCompleted = true;
+			next = NEXT_PHASE[next];
+			safety++;
+		}
 		this.phase = next;
 		this.phaseAccumulated = overshootSeconds;
 		this.phaseStart = now;
-		if (completedFullCycle) this.cyclesCompleted++;
-		sounds.playPhaseCue();
+		if (cycleCompleted) this.cyclesCompleted++;
+		sounds.playPhaseCue(this.phase);
 	}
 }
 

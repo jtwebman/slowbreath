@@ -197,5 +197,5 @@ void main() {
 <canvas
 	bind:this={canvasEl}
 	data-testid="pacer-glow"
-	class="aspect-square w-full max-w-[460px] rounded-3xl"
+	class="aspect-square w-full max-w-[min(360px,55vh)] rounded-3xl"
 ></canvas>
