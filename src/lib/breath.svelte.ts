@@ -227,7 +227,10 @@ class BreathStore {
 		this.phase = next;
 		this.phaseAccumulated = overshootSeconds;
 		this.phaseStart = now;
-		if (cycleCompleted) this.cyclesCompleted++;
+		if (cycleCompleted) {
+			this.cyclesCompleted++;
+			window.hitsonce?.('breath_cycle', this.protocol);
+		}
 		sounds.playPhaseCue(this.phase);
 	}
 }
