@@ -2,7 +2,7 @@
 	"name": "slowbreath",
 	"description": "A simple, free, full-screen slow-breathing pacer. Box breathing (4-4-4-4) and other research-backed protocols. Designed for blood pressure, anxiety, and focus.",
 	"private": true,
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"license": "AGPL-3.0-or-later",
 	"homepage": "https://slowbreath.app",
 	"keywords": [
